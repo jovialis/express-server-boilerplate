@@ -13,7 +13,7 @@ import * as enforce from 'express-sslify';
 
 export type RestHandler = (app: Application) => void;
 
-export class ServerBoilerplate {
+export default class ServerBoilerplate {
     private readonly dev: boolean;
     private handlers: RestHandler[];
 

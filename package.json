@@ -1,9 +1,9 @@
 {
   "name": "express-server-boilerplate",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": {
     "name": "Dylan Hanson (jovialis)",
-    "email": "cdh.create@gmail.com",
+    "email": "dylan@sandboxlabs.co",
     "url": "https://github.com/jovialis"
   },
   "private": false,
