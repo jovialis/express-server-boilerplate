@@ -1,6 +1,6 @@
 {
   "name": "express-server-boilerplate",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "jovialis (Dylan Hanson)",
   "private": false,
   "description": "Dynamic, opinionated builder for Express servers.",

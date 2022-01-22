@@ -11,9 +11,9 @@ import * as logger from 'morgan';
 import * as cors from 'cors';
 import * as enforce from 'express-sslify';
 
-export declare type RestHandler = (app: Application) => void;
+export type RestHandler = (app: Application) => void;
 
-class ServerBoilerplate {
+export class ServerBoilerplate {
     private readonly dev: boolean;
     private handlers: RestHandler[];
 
@@ -100,5 +100,3 @@ class ServerBoilerplate {
         return await startPromise;
     }
 }
-
-export default new ServerBoilerplate();
