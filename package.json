@@ -1,15 +1,21 @@
 {
   "name": "express-server-boilerplate",
   "version": "0.0.2",
-  "author": "jovialis (Dylan Hanson)",
+  "author": {
+    "name": "Dylan Hanson (jovialis)",
+    "email": "cdh.create@gmail.com",
+    "url": "https://github.com/jovialis"
+  },
   "private": false,
   "description": "Dynamic, opinionated builder for Express servers.",
   "repository": {
     "url": "https://github.com/jovialis/express-server-boilerplate"
   },
+  "scripts": {
+    "build": "tsc"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "prepublish": "tsc",
   "dependencies": {
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
@@ -26,5 +32,8 @@
     "@types/morgan": "^1.9.3",
     "@types/cookie-parser": "^1.4.2",
     "@types/express-sslify": "^1.2.2"
-  }
+  },
+  "files": [
+    "lib/**/*"
+  ]
 }
