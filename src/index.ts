@@ -20,6 +20,8 @@ export class ServerBoilerplate {
     // Package-specific settings
     private corsOptions: CorsOptions | false = {};
 
+    private _extendedURLEncoding: boolean = false;
+
     // Error handling function
     private errorRequestHandler: ErrorRequestHandler = (
         err: any, req: Request, res: Response, next: NextFunction
@@ -56,6 +58,10 @@ export class ServerBoilerplate {
         return this;
     }
 
+    public extendedURLEncoding(flag: boolean) {
+        this._extendedURLEncoding = flag;
+    }
+
     public errorHandler(handler: ErrorRequestHandler): ServerBoilerplate {
         this.errorRequestHandler = handler;
         return this;
@@ -74,7 +80,7 @@ export class ServerBoilerplate {
 
         app.use(logger.default(this.dev ? 'dev' : 'tiny'));
         app.use(express.json());
-        app.use(express.urlencoded({ extended: false }));
+        app.use(express.urlencoded({ extended: this._extendedURLEncoding }));
         app.use(cookieParser.default());
 
         if (this.corsOptions !== false)
