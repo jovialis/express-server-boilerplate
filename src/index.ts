@@ -21,6 +21,7 @@ export class ServerBoilerplate {
     private corsOptions: CorsOptions | false = {};
 
     private _extendedURLEncoding: boolean = false;
+    private _uploadLimit: string = "1mb";
 
     // Error handling function
     private errorRequestHandler: ErrorRequestHandler = (
@@ -62,6 +63,10 @@ export class ServerBoilerplate {
         this._extendedURLEncoding = flag;
     }
 
+    public uploadLimit(val: string) {
+        this._uploadLimit = val;
+    }
+
     public errorHandler(handler: ErrorRequestHandler): ServerBoilerplate {
         this.errorRequestHandler = handler;
         return this;
@@ -79,8 +84,13 @@ export class ServerBoilerplate {
         }
 
         app.use(logger.default(this.dev ? 'dev' : 'tiny'));
-        app.use(express.json());
-        app.use(express.urlencoded({ extended: this._extendedURLEncoding }));
+        app.use(express.urlencoded({
+            extended: this._extendedURLEncoding,
+            limit: this._uploadLimit
+        }));
+        app.use(express.json({
+            limit: this._uploadLimit
+        }));
         app.use(cookieParser.default());
 
         if (this.corsOptions !== false)
