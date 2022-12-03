@@ -23,17 +23,23 @@ export class ServerBoilerplate {
 	private _extendedURLEncoding: boolean = false;
 	private _uploadLimit: string = "1mb";
 
+	private _logging: boolean = true;
+
 	constructor() {
 		this.dev = process.env.NODE_ENV !== 'production'
 		this.handlers = [];
 	}
 
-	public handler(handler: RestHandler): ServerBoilerplate {
+	public logging(logging: boolean) {
+		this._logging = logging;
+	}
+
+	public handler(handler: RestHandler): this {
 		this.handlers.push(handler);
 		return this;
 	}
 
-	public cors(options: CorsOptions): ServerBoilerplate {
+	public cors(options: CorsOptions): this {
 		this.corsOptions = options;
 		return this;
 	}
@@ -46,7 +52,7 @@ export class ServerBoilerplate {
 		this._uploadLimit = val;
 	}
 
-	public errorHandler(handler: ErrorRequestHandler): ServerBoilerplate {
+	public errorHandler(handler: ErrorRequestHandler): this {
 		this.errorRequestHandler = handler;
 		return this;
 	}
@@ -62,7 +68,10 @@ export class ServerBoilerplate {
 			app.enable('trust proxy');
 		}
 
-		app.use(logger.default(this.dev ? 'dev' : 'tiny'));
+		if (this._logging) {
+			app.use(logger.default(this.dev ? 'dev' : 'tiny'));
+		}
+		
 		app.use(express.urlencoded({
 			extended: this._extendedURLEncoding,
 			limit: this._uploadLimit
