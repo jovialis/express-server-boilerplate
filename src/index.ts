@@ -6,8 +6,9 @@ import * as cookieParser from 'cookie-parser';
 import * as cors from 'cors';
 import {CorsOptions} from 'cors';
 import * as express from "express";
-import {Application, ErrorRequestHandler, Express, NextFunction, Request, Response} from "express";
+import {Application, ErrorRequestHandler, NextFunction, Request, Response} from "express";
 import * as enforce from 'express-sslify';
+import {Server} from "http";
 import * as logger from 'morgan';
 
 export type RestHandler = (app: Application) => void;
@@ -50,7 +51,7 @@ export class ServerBoilerplate {
 		return this;
 	}
 
-	public async start(port?: string): Promise<Express> {
+	public async start(port?: string): Promise<Server> {
 		port = port || process.env.PORT;
 
 		const app = express.default();
@@ -87,12 +88,13 @@ export class ServerBoilerplate {
 		app.use(this.errorRequestHandler);
 
 		// Start listening through a Promise!
-		const startPromise: Promise<void> = new Promise((resolve, _) => {
-			app.listen(port, resolve);
+		const startPromise: Promise<Server> = new Promise<Server>((resolve, _) => {
+			const server: Server = app.listen(port, () => {
+				resolve(server);
+			});
 		});
 
-		await startPromise;
-		return app;
+		return await startPromise;
 	}
 
 	// Error handling function
