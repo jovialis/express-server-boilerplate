@@ -2,117 +2,117 @@
  * Created on 10/15/21 by jovialis (Dylan Hanson)
  **/
 
-import {Application, Request, Response, NextFunction, ErrorRequestHandler} from "express";
-import {CorsOptions} from 'cors';
-
-import * as express from 'express';
 import * as cookieParser from 'cookie-parser';
-import * as logger from 'morgan';
 import * as cors from 'cors';
+import {CorsOptions} from 'cors';
+import * as express from "express";
+import {Application, ErrorRequestHandler, Express, NextFunction, Request, Response} from "express";
 import * as enforce from 'express-sslify';
+import * as logger from 'morgan';
 
 export type RestHandler = (app: Application) => void;
 
 export class ServerBoilerplate {
-    private readonly dev: boolean;
-    private handlers: RestHandler[];
+	private readonly dev: boolean;
+	private handlers: RestHandler[];
 
-    // Package-specific settings
-    private corsOptions: CorsOptions | false = {};
+	// Package-specific settings
+	private corsOptions: CorsOptions | false = {};
 
-    private _extendedURLEncoding: boolean = false;
-    private _uploadLimit: string = "1mb";
+	private _extendedURLEncoding: boolean = false;
+	private _uploadLimit: string = "1mb";
 
-    // Error handling function
-    private errorRequestHandler: ErrorRequestHandler = (
-        err: any, req: Request, res: Response, next: NextFunction
-    ) => {
-        if (res.headersSent) {
-            return next(err);
-        }
+	constructor() {
+		this.dev = process.env.NODE_ENV !== 'production'
+		this.handlers = [];
+	}
 
-        let status = err.statusCode || 500;
-        let message = err.message || "No error details provided.";
+	public handler(handler: RestHandler): ServerBoilerplate {
+		this.handlers.push(handler);
+		return this;
+	}
 
-        if (err.expose || this.dev) {
-            // console.log(err);
-        } else {
-            status = 500;
-            message = "An internal error occurred.";
-        }
+	public cors(options: CorsOptions): ServerBoilerplate {
+		this.corsOptions = options;
+		return this;
+	}
 
-        res.status(status).send(message);
-    }
+	public extendedURLEncoding(flag: boolean) {
+		this._extendedURLEncoding = flag;
+	}
 
-    constructor() {
-        this.dev = process.env.NODE_ENV !== 'production'
-        this.handlers = [];
-    }
+	public uploadLimit(val: string) {
+		this._uploadLimit = val;
+	}
 
-    public handler(handler: RestHandler): ServerBoilerplate {
-        this.handlers.push(handler);
-        return this;
-    }
+	public errorHandler(handler: ErrorRequestHandler): ServerBoilerplate {
+		this.errorRequestHandler = handler;
+		return this;
+	}
 
-    public cors(options: CorsOptions): ServerBoilerplate {
-        this.corsOptions = options;
-        return this;
-    }
+	public async start(port?: string): Promise<Express> {
+		port = port || process.env.PORT;
 
-    public extendedURLEncoding(flag: boolean) {
-        this._extendedURLEncoding = flag;
-    }
+		const app = express.default();
+		app.disable('x-powered-by');
 
-    public uploadLimit(val: string) {
-        this._uploadLimit = val;
-    }
+		// Trust proxy if we're in production
+		if (!this.dev) {
+			app.enable('trust proxy');
+		}
 
-    public errorHandler(handler: ErrorRequestHandler): ServerBoilerplate {
-        this.errorRequestHandler = handler;
-        return this;
-    }
+		app.use(logger.default(this.dev ? 'dev' : 'tiny'));
+		app.use(express.urlencoded({
+			extended: this._extendedURLEncoding,
+			limit: this._uploadLimit
+		}));
+		app.use(express.json({
+			limit: this._uploadLimit
+		}));
+		app.use(cookieParser.default());
 
-    public async start(port?: string): Promise<void> {
-        port = port || process.env.PORT;
+		if (this.corsOptions !== false)
+			app.use(cors.default(this.corsOptions));
 
-        const app = express.default();
-        app.disable('x-powered-by');
+		// Enforce HTTPS if we are on a production server
+		if (!this.dev) {
+			app.use(enforce.HTTPS({trustProtoHeader: true}));
+			app.set('trust proxy', true);
+		}
 
-        // Trust proxy if we're in production
-        if (!this.dev) {
-            app.enable('trust proxy');
-        }
+		// Execute user defined handlers.
+		await Promise.all(this.handlers.map(v => v(app)));
 
-        app.use(logger.default(this.dev ? 'dev' : 'tiny'));
-        app.use(express.urlencoded({
-            extended: this._extendedURLEncoding,
-            limit: this._uploadLimit
-        }));
-        app.use(express.json({
-            limit: this._uploadLimit
-        }));
-        app.use(cookieParser.default());
+		// Error handler
+		app.use(this.errorRequestHandler);
 
-        if (this.corsOptions !== false)
-            app.use(cors.default(this.corsOptions));
+		// Start listening through a Promise!
+		const startPromise: Promise<void> = new Promise((resolve, _) => {
+			app.listen(port, resolve);
+		});
 
-        // Enforce HTTPS if we are on a production server
-        if (!this.dev) {
-            app.use(enforce.HTTPS({trustProtoHeader: true}));
-            app.set('trust proxy', true);
-        }
+		await startPromise;
+		return app;
+	}
 
-        // Execute user defined handlers.
-        await Promise.all(this.handlers.map(v => v(app)));
+	// Error handling function
+	private errorRequestHandler: ErrorRequestHandler = (
+		err: any, req: Request, res: Response, next: NextFunction
+	) => {
+		if (res.headersSent) {
+			return next(err);
+		}
 
-        // Error handler
-        app.use(this.errorRequestHandler);
+		let status = err.statusCode || 500;
+		let message = err.message || "No error details provided.";
 
-        // Start listening through a Promise!
-        const startPromise: Promise<void> = new Promise((resolve, _) => {
-            app.listen(port, resolve);
-        });
+		if (err.expose || this.dev) {
+			// console.log(err);
+		} else {
+			status = 500;
+			message = "An internal error occurred.";
+		}
 
-        return await startPromise;
-    }
+		res.status(status).send(message);
+	}
 }
